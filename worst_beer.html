@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>D3 Example</title>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <link href='http://fonts.googleapis.com/css?family=Poiret+One' rel='stylesheet' type='text/css'>
+    <style>
+
+      body {
+        background: grey;
+      }
+
+      .axis text {
+        font: 10pt sans-serif;
+        font-family: 'Poiret One', cursive;
+        stroke: #000;
+      }
+
+      .axis path,
+      .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+      }
+
+    </style>
+  </head>
+  <body>
+    <script>
+      var outerWidth = 1000;
+      var outerHeight = 250;
+      var margin = { left: 90, top: 30, right: 30, bottom: 30 };
+      var barPadding = 0.2;
+
+      var xColumn = "name";
+      var yColumn = "rank";
+
+      var innerWidth  = outerWidth  - margin.left - margin.right;
+      var innerHeight = outerHeight - margin.top  - margin.bottom;
+
+      var svg = d3.select("body").append("svg")
+        .attr("width",  outerWidth)
+        .attr("fill", "teal")
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .attr("height", outerHeight);
+      var g = svg.append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+      var xAxisG = g.append("g")
+        .attr("class", "x axis")
+
+
+        .attr("transform", "translate(0," + innerHeight + ")");
+      var yAxisG = g.append("g")
+        .attr("class", "y axis");
+
+      var xScale = d3.scale.ordinal().rangeBands([0, innerWidth], barPadding);
+      var yScale = d3.scale.linear().range([innerHeight, 0]);
+
+      var xAxis = d3.svg.axis().scale(xScale).orient("bottom")
+        .outerTickSize(0);          // Turn off the marks at the end of the axis.
+      var yAxis = d3.svg.axis().scale(yScale).orient("left")
+        .ticks(5)                   // Use approximately 5 ticks marks.
+        .tickFormat(d3.format("g")) // Use intelligent abbreviations, e.g. 5M for 5 Million
+        .outerTickSize(0);          // Turn off the marks at the end of the axis.
+
+      function render(data){
+
+        xScale.domain(       data.map( function (d){ return d[xColumn]; }));
+        yScale.domain([0, d3.max(data, function (d){ return d[yColumn]; })]);
+
+        xAxisG.call(xAxis);
+        yAxisG.call(yAxis);
+
+        var bars = g.selectAll("rect").data(data);
+        bars.enter().append("rect")
+          .attr("width", xScale.rangeBand());
+        bars
+          .attr("x",      function (d){ return               xScale(d[xColumn]); })
+          .attr("y",      function (d){ return               yScale(d[yColumn]); })
+          .attr("height", function (d){ return innerHeight - yScale(d[yColumn]); });
+        bars.exit().remove();
+      }
+
+      function type(d){
+        d.rank = +d.rank;
+        return d;
+      }
+
+      d3.csv("ranking.csv", type, render);
+
+    </script>
+  </body>
+</html>
